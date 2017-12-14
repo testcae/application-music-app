@@ -77,9 +77,9 @@ public class uatTestImage extends RESTService {
 
   @Api
   @SwaggerDefinition(
-      info = @Info(title = "image-service-2", version = "$Metadata_Version$",
-          description = "$Metadata_Description$",
-          termsOfService = "$Metadata_Terms$",
+      info = @Info(title = "image-service-2", version = "1",
+          description = "descriptiom of the service",
+          termsOfService = "you have to sell your soul to us in order to use the service.",
           contact = @Contact(name = "Melisa Cecilia", email = "CAEAddress@gmail.com") ,
           license = @License(name = "BSD",
               url = "https://github.com/testcae/microservice-image-service-2/blob/master/LICENSE.txt") ) )
@@ -88,14 +88,158 @@ public class uatTestImage extends RESTService {
 
     private final uatTestImage service = (uatTestImage) Context.getCurrent().getService();
 
-    
+      /**
+   * 
+   * postImage
+   *
+   * 
+   * @param imagePayload A description.. a JSONObject
+   * 
+   * @return Response 
+   * 
+   */
+  @POST
+  @Path("/post")
+  @Produces(MediaType.TEXT_PLAIN)
+  @Consumes(MediaType.TEXT_PLAIN)
+  @ApiResponses(value = {
+       @ApiResponse(code = HttpURLConnection.HTTP_OK, message = "postImageResponse")
+  })
+  @ApiOperation(value = "postImage", notes = " ")
+  public Response postImage(String imagePayload) {
+   classes.image payloadimagePayloadObject = new classes().new image();
+   try { 
+       payloadimagePayloadObject.fromJSON(imagePayload);
+   } catch (Exception e) { 
+       e.printStackTrace();
+       JSONObject result = new JSONObject();
+       return Response.status(HttpURLConnection.HTTP_INTERNAL_ERROR).entity("Cannot convert json to object").build();
+   }
+    try { 
+        Connection conn = service.dbm.getConnection();
+        PreparedStatement query = conn.prepareStatement(
+          "INSERT INTO uatTest.tblImage(imageName, imageUrl) VALUES(?,?) ");
+        query.setString(1, payloadimagePayloadObject.getimageName());
+        query.setString(2, payloadimagePayloadObject.getimageUrl());
+        query.executeUpdate();
+
+        // get id of the new added image
+        ResultSet generatedKeys = query.getGeneratedKeys();
+        if (generatedKeys.next()) {
+          return Response.status(HttpURLConnection.HTTP_OK).entity(generatedKeys.getLong(1)).build();
+        } else {
+          return Response.status(HttpURLConnection.HTTP_OK).entity(0).build();
+        }
+    } catch(Exception e) {
+      e.printStackTrace();
+      return Response.status(HttpURLConnection.HTTP_INTERNAL_ERROR).entity(0).build();
+    }
+
+  }
+
+  /**
+   * 
+   * getImage
+   *
+   * 
+   *
+   * 
+   * @return Response A simple image service
+   * 
+   */
+  @GET
+  @Path("/image")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.TEXT_PLAIN)
+  @ApiResponses(value = {
+       @ApiResponse(code = HttpURLConnection.HTTP_OK, message = "A simple image service")
+  })
+  @ApiOperation(value = "getImage", notes = " ")
+  public Response getImage() {
+
+    // getImageResponse
+    try { 
+        Connection conn = service.dbm.getConnection();
+        PreparedStatement query = conn.prepareStatement("SELECT * FROM uatTest.tblImage");
+        ResultSet result = query.executeQuery();
+        JSONArray jsonResult = new JSONArray();
+        while(result.next()) {
+          classes.image imageResult = new classes().new image();
+          imageResult.setimageName(result.getString("imageName"));
+          imageResult.setimageUrl(result.getString("imageUrl"));
+          imageResult.setimageId(result.getInt("imageId"));
+          jsonResult.add(imageResult.toJSON());
+        }
+        // responseGetImage
+        return Response.status(HttpURLConnection.HTTP_OK).entity(jsonResult.toJSONString()).build();
+    } catch(Exception e) {
+      e.printStackTrace();
+      JSONObject result = new JSONObject(); 
+      return Response.status(HttpURLConnection.HTTP_INTERNAL_ERROR).entity(result.toJSONString()).build();
+    }
+
+  }
+
+
 
   }
 
   // //////////////////////////////////////////////////////////////////////////////////////
   // Service methods (for inter service calls)
   // //////////////////////////////////////////////////////////////////////////////////////
-  
+  public String getImage() {
+    final uatTestImage service = (uatTestImage) Context.getCurrent().getService();
+    try { 
+        Connection conn = service.dbm.getConnection();
+        PreparedStatement query = conn.prepareStatement("SELECT * FROM uatTest.tblImage");
+        ResultSet result = query.executeQuery();
+        JSONArray jsonResult = new JSONArray();
+        while(result.next()) {
+          classes.image imageResult = new classes().new image();
+          imageResult.setimageName(result.getString("imageName"));
+          imageResult.setimageUrl(result.getString("imageUrl"));
+          imageResult.setimageId(result.getInt("imageId"));
+          jsonResult.add(imageResult.toJSON());
+        }
+        // responseGetImage
+        return jsonResult.toJSONString();
+    } catch(Exception e) {
+      e.printStackTrace();
+      JSONObject result = new JSONObject(); 
+      return result.toJSONString();
+    }
+  }
+
+  public int postImage(String payloadPostImage) {
+    final uatTestImage service = (uatTestImage) Context.getCurrent().getService();
+    classes.image payloadObject = new classes().new image();
+    try {
+        payloadObject.fromJSON(payloadPostImage);
+    } catch (Exception e) {
+        e.printStackTrace();
+        return 0;
+    }
+
+    try { 
+        Connection conn = service.dbm.getConnection();
+        PreparedStatement query = conn.prepareStatement(
+          "INSERT INTO uatTest.tblImage(imageName, imageUrl) VALUES(?,?) ");
+        query.setString(1, payloadObject.getimageName());
+        query.setString(2, payloadObject.getimageUrl());
+        query.executeUpdate();
+
+        // get id of the new added image
+        ResultSet generatedKeys = query.getGeneratedKeys();
+        if (generatedKeys.next()) {
+          return Math.toIntExact(generatedKeys.getLong(1));
+        } else {
+          return 0;
+        }
+    } catch(Exception e) {
+      e.printStackTrace();
+      return 0;
+    }
+  }
   
 
 }
